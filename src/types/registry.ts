@@ -10,3 +10,11 @@ export type DependencyTreeNode = {
   resolvedVersion?: VersionId;
   dependencies: DependencyTreeNode[];
 };
+
+export type PackageVersions = {
+  versionsDependencies: Record<
+    VersionId,
+    Record<PackageName, ResolvableVersion>
+  >;
+  distributionTags: Record<DistributionTag, VersionId>;
+};

@@ -1,5 +1,6 @@
 import { RequestHandler, Request, Response } from 'express';
-import NpmRegistryService from '../services/npm-registry.service';
+import NpmRegistryService from '@/services/registry.service';
+import { DefaultException } from '@exceptions/default';
 
 class DependenciesController {
   public static get: RequestHandler = async (req: Request, res: Response) => {
@@ -16,12 +17,17 @@ class DependenciesController {
 
     if (scope) packageName = `${scope}/${packageName}`;
 
-    const dependencyTree = await NpmRegistryService.getDependencyTree(
-      packageName,
-      version,
-    );
-
-    res.json({ dependencyTree });
+    try {
+      const dependencyTree = await NpmRegistryService.getDependencyTree(
+        packageName,
+        version,
+      );
+      res.json(dependencyTree);
+    } catch (e) {
+      res
+        .status(e.statusCode || DefaultException.statusCode)
+        .json({ error: e.description || DefaultException.description });
+    }
   };
 }
 
