@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import DependenciesController from '../controllers/dependecies.controller';
+import DependenciesController from '@controllers/dependencies.controller';
 
 const DependenciesRoutes = Router();
 
