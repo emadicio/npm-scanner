@@ -26,11 +26,9 @@ class RegistryService {
       dependencies: [],
     };
 
-    const stack: DependencyTreeNode[] = [dependencyTree];
+    const treePath = new Set<string>();
 
-    while (stack.length) {
-      const dependencyNode = stack.pop();
-
+    const deepSearch = async (dependencyNode: DependencyTreeNode) => {
       const { versionsDependencies, distributionTags } =
         await this.getPackageVersions(dependencyNode.packageName);
 
@@ -41,30 +39,78 @@ class RegistryService {
         distributionTags,
       );
 
+      const treePathKey = this.getCacheKey(
+        dependencyNode.packageName,
+        dependencyNode.resolvedVersion,
+      );
+
+      if (treePath.has(treePathKey)) {
+        dependencyNode.cycle = true;
+        return;
+      }
+
+      const cachedDependencyNode = await this.fetchDependencyTreeNodeFromCache(
+        dependencyNode.packageName,
+        dependencyNode.resolvedVersion,
+      );
+
+      if (cachedDependencyNode) {
+        dependencyNode.dependencies = cachedDependencyNode.dependencies;
+        return;
+      }
+
+      treePath.add(treePathKey);
+
       const resolvedVersionDependencies =
         versionsDependencies[dependencyNode.resolvedVersion];
 
       for (const [dependencyPackageName, dependencyVersion] of Object.entries(
         resolvedVersionDependencies,
       )) {
-        dependencyNode.dependencies.push({
+        const childDependencyNode: DependencyTreeNode = {
           packageName: dependencyPackageName,
           version: dependencyVersion,
           dependencies: [],
-        });
+        };
+        dependencyNode.dependencies.push(childDependencyNode);
+        await deepSearch(childDependencyNode);
       }
 
-      stack.push(...dependencyNode.dependencies);
-    }
+      treePath.delete(treePathKey);
+
+      this.cacheDependencyTreeNode(dependencyNode);
+    };
+
+    await deepSearch(dependencyTree);
 
     return dependencyTree;
+  }
+
+  private static async fetchDependencyTreeNodeFromCache(
+    packageName: string,
+    version: VersionId,
+  ): Promise<DependencyTreeNode | undefined> {
+    return await CacheService.get(this.getCacheKey(packageName, version));
+  }
+
+  private static async cacheDependencyTreeNode(
+    dependencyNode: DependencyTreeNode,
+  ): Promise<void> {
+    if (!dependencyNode.resolvedVersion) return;
+    CacheService.set(
+      this.getCacheKey(
+        dependencyNode.packageName,
+        dependencyNode.resolvedVersion,
+      ),
+      dependencyNode,
+    );
   }
 
   private static async getPackageVersions(
     packageName: PackageName,
   ): Promise<PackageVersions> {
     let packageVersions: PackageVersions =
-      await this.fetchPackageVersionsFromCache(packageName);
+      await this.fetchPackageVersionsFromCache(this.getCacheKey(packageName));
     if (!packageVersions) {
       packageVersions = await this.fetchPackageVersionsFromRegistry(
         packageName,
@@ -76,8 +122,15 @@ class RegistryService {
 
   private static async fetchPackageVersionsFromCache(
     packageName: string,
-  ): Promise<PackageVersions> {
-    return await CacheService.get(packageName);
+  ): Promise<PackageVersions | undefined> {
+    return await CacheService.get(this.getCacheKey(packageName));
+  }
+
+  private static async cachePackageVersions(
+    packageName: string,
+    versions: PackageVersions,
+  ): Promise<void> {
+    await CacheService.set(this.getCacheKey(packageName), versions);
   }
 
   private static async fetchPackageVersionsFromRegistry(
@@ -103,9 +156,14 @@ class RegistryService {
     const distributionTags: Record<DistributionTag, VersionId> =
       data['dist-tags'];
 
-    CacheService.set(packageName, { versionsDependencies, distributionTags });
+    const packageVersions = {
+      versionsDependencies,
+      distributionTags,
+    };
 
-    return { versionsDependencies, distributionTags };
+    this.cachePackageVersions(packageName, packageVersions);
+
+    return packageVersions;
   }
 
   private static resolveDependencyVersion(
@@ -124,9 +182,15 @@ class RegistryService {
       resolvedVersion = distributionTags[version];
     }
 
-    if (!resolvedVersion) throw VersionNotFoundException(packageName, version);
+    if (!resolvedVersion) {
+      throw VersionNotFoundException(packageName, version);
+    }
 
     return resolvedVersion;
+  }
+
+  private static getCacheKey(packageName: string, version?: VersionId): string {
+    return packageName + (version ? `@${version}` : '');
   }
 }
 

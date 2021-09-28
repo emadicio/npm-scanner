@@ -9,6 +9,7 @@ export type DependencyTreeNode = {
   version: ResolvableVersion;
   resolvedVersion?: VersionId;
   dependencies: DependencyTreeNode[];
+  cycle?: boolean;
 };
 
 export type PackageVersions = {
