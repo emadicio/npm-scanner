@@ -46,19 +46,19 @@ The possible sub-paths are:
 
     GET /dependencies/:packageName
 
-*e.g._ /dependencies/async*
+*e.g. /dependencies/async*
 
     GET /dependencies/:packageName/:version
 
-*e.g._ /dependencies/async/2.0.1_* or */dependencies/async/latest*
+*e.g. /dependencies/async/2.0.1* or */dependencies/async/latest*
 
     GET /dependencies/:scope/:packageName
 
-*e.g._ /dependencies/@snyk/protect*
+*e.g. /dependencies/@snyk/protect*
 
     GET /dependencies/:scope/:packageName/:version
 
-*e.g._ /dependencies/@snyk/protect/1.720.0*
+*e.g. /dependencies/@snyk/protect/1.720.0*
 
 Please note that omitting the package version will default to use the `latest` tag version.
 
