@@ -19,8 +19,8 @@ class RedisService {
     });
   }
 
-  public static async get(key: string): Promise<string | undefined> {
-    let value;
+  public static async get(key: string): Promise<string | null> {
+    let value = null;
     await new Promise<void>((resolve) => {
       this.client.get(key, (error, data) => {
         if (error) console.error(error);
@@ -28,7 +28,7 @@ class RedisService {
         resolve();
       });
     });
-    return value as string;
+    return value;
   }
 
   public static async set(key: string, value: string): Promise<void> {

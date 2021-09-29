@@ -98,16 +98,18 @@ class RegistryService {
   private static async fetchDependencyTreeNodeFromCache(
     packageName: string,
     version: VersionId,
-  ): Promise<DependencyTreeNode | undefined> {
-    return await CacheService.get(this.getCacheKey(packageName, version));
+  ): Promise<DependencyTreeNode | null> {
+    const item = await CacheService.get(this.getCacheKey(packageName, version));
+    if (item) return item.data as DependencyTreeNode;
+    return null
   }
 
   /*
   * Stores a dependency tree node in the cache
   */
-  private static async cacheDependencyTreeNode(
+  private static cacheDependencyTreeNode(
     dependencyNode: DependencyTreeNode,
-  ): Promise<void> {
+  ): void {
     if (!dependencyNode.resolvedVersion) return;
     CacheService.set(
       this.getCacheKey(
@@ -125,7 +127,7 @@ class RegistryService {
   private static async getPackageVersions(
     packageName: PackageName,
   ): Promise<PackageVersions> {
-    let packageVersions: PackageVersions =
+    let packageVersions =
       await this.fetchPackageVersionsFromCache(this.getCacheKey(packageName));
     if (!packageVersions) {
       packageVersions = await this.fetchPackageVersionsFromRegistry(
@@ -141,18 +143,20 @@ class RegistryService {
   */
   private static async fetchPackageVersionsFromCache(
     packageName: string,
-  ): Promise<PackageVersions | undefined> {
-    return await CacheService.get(this.getCacheKey(packageName));
+  ): Promise<PackageVersions | null> {
+    const item = await CacheService.get(this.getCacheKey(packageName));
+    if (item) return item.data as PackageVersions;
+    return null;
   }
 
   /*
   * Caches the available versions of a package
   */
-  private static async cachePackageVersions(
+  private static cachePackageVersions(
     packageName: string,
     versions: PackageVersions,
-  ): Promise<void> {
-    await CacheService.set(this.getCacheKey(packageName), versions);
+  ): void {
+    CacheService.set(this.getCacheKey(packageName), versions);
   }
 
   /*
@@ -164,7 +168,7 @@ class RegistryService {
     let data;
     try {
       data = await FetchService.get(
-        npmRegistryUrl.replace('{packageName}', packageName),
+        npmRegistryUrl.replace('{packageName}', packageName)
       );
     } catch {
       throw PackageNotFoundException(packageName);
@@ -200,7 +204,7 @@ class RegistryService {
     versions: VersionId[],
     distributionTags: Record<DistributionTag, VersionId>,
   ): VersionId {
-    let resolvedVersion: string | undefined;
+    let resolvedVersion;
 
     if (versions.includes(version)) {
       resolvedVersion = version;
