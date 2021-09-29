@@ -30,7 +30,7 @@ To run the app in development mode, run the command:
 
 To run the app in production mode, run:
 
-    npm run build && npm run dev
+    npm run build && npm run start
 
 The app will be served by default on `localhost:3000`.
 
