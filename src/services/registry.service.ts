@@ -16,6 +16,9 @@ import {
 } from '@/types/registry';
 
 class RegistryService {
+  /*
+  * Returns the entire dependency tree of a package version
+  */
   public static async getDependencyTree(
     packageName: PackageName,
     version: ResolvableVersion,
@@ -26,6 +29,7 @@ class RegistryService {
       dependencies: [],
     };
 
+    // Needed to detect dependency cycles
     const treePath = new Set<string>();
 
     const deepSearch = async (dependencyNode: DependencyTreeNode) => {
@@ -44,6 +48,7 @@ class RegistryService {
         dependencyNode.resolvedVersion,
       );
 
+      // Dependency cycle detected in path
       if (treePath.has(treePathKey)) {
         dependencyNode.cycle = true;
         return;
@@ -86,6 +91,10 @@ class RegistryService {
     return dependencyTree;
   }
 
+  /*
+  * Fetches an individual dependency tree node frome cache
+  * It includes all its child dependencies
+  */
   private static async fetchDependencyTreeNodeFromCache(
     packageName: string,
     version: VersionId,
@@ -93,6 +102,9 @@ class RegistryService {
     return await CacheService.get(this.getCacheKey(packageName, version));
   }
 
+  /*
+  * Stores a dependency tree node in the cache
+  */
   private static async cacheDependencyTreeNode(
     dependencyNode: DependencyTreeNode,
   ): Promise<void> {
@@ -106,6 +118,10 @@ class RegistryService {
     );
   }
 
+  /*
+  * Given a package,
+  * returns a map of all its available version, their dependencies and dist tags
+  */
   private static async getPackageVersions(
     packageName: PackageName,
   ): Promise<PackageVersions> {
@@ -120,12 +136,18 @@ class RegistryService {
     return packageVersions;
   }
 
+  /*
+  * Fetches the available versions of a package from the cache
+  */
   private static async fetchPackageVersionsFromCache(
     packageName: string,
   ): Promise<PackageVersions | undefined> {
     return await CacheService.get(this.getCacheKey(packageName));
   }
 
+  /*
+  * Caches the available versions of a package
+  */
   private static async cachePackageVersions(
     packageName: string,
     versions: PackageVersions,
@@ -133,6 +155,9 @@ class RegistryService {
     await CacheService.set(this.getCacheKey(packageName), versions);
   }
 
+  /*
+  * Fetches the available versions of a package from the NPM Registry
+  */
   private static async fetchPackageVersionsFromRegistry(
     packageName: string,
   ): Promise<PackageVersions> {
@@ -166,6 +191,9 @@ class RegistryService {
     return packageVersions;
   }
 
+  /*
+  * Matches a resolvable version to one of the available versions of a package
+  */
   private static resolveDependencyVersion(
     packageName: string,
     version: ResolvableVersion,
@@ -189,6 +217,9 @@ class RegistryService {
     return resolvedVersion;
   }
 
+  /*
+  * Returns a unique and consistent cache identifier for a package name and version
+  */
   private static getCacheKey(packageName: string, version?: VersionId): string {
     return packageName + (version ? `@${version}` : '');
   }
