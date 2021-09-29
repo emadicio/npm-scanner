@@ -6,6 +6,7 @@ This project is based on Typescript, Node.js, Express.js and Redis.
 ## Installation
 
 ### With Docker
+
 As the application relies on Node.js and Redis, the project contains these necessary dependencies bundled through Docker and Docker Compose.
 Please refer to the official documentation for installing [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/) on your system.
 Once both are installed, run the following command in the root of the project directory:
@@ -15,6 +16,7 @@ Once both are installed, run the following command in the root of the project di
 The service will be built, launched and served by default on `localhost:3000`.
 
 ### Without Docker
+
 The project can also be installed and served without the usage of Docker.
 Please make sure to have [Node.js](https://nodejs.org/en/download/) and [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm/) installed on your system.
 The application also requires a Redis instance running, which can be [installed locally](https://redis.io/topics/quickstart) or on a cloud provider.
@@ -35,6 +37,7 @@ To run the app in production mode, run:
 The app will be served by default on `localhost:3000`.
 
 ## Usage
+
 The application is a REST service which takes a package name and an optional version and returns its dependency tree in JSON format.
 
 There is only one GET endpoint, `/dependencies`, which accepts different input paths for specifying scope, package name and version, consistently with the `https://registry.npmjs.org/` API.
@@ -42,28 +45,33 @@ There is only one GET endpoint, `/dependencies`, which accepts different input p
 The possible sub-paths are:
 
     GET /dependencies/:packageName
-**e.g.* /dependencies/async*
+
+*e.g. /dependencies/async*
 
     GET /dependencies/:packageName/:version
-**e.g.* /dependencies/async/2.0.1* or **/dependencies/async/latest*
+
+*e.g. /dependencies/async/2.0.1* or */dependencies/async/latest*
 
     GET /dependencies/:scope/:packageName
-**e.g.* /dependencies/@snyk/protect*
+
+*e.g. /dependencies/@snyk/protect*
 
     GET /dependencies/:scope/:packageName/:version
-**e.g.* /dependencies/@snyk/protect/1.720.0*
+
+*e.g. /dependencies/@snyk/protect/1.720.0*
 
 Please note that omitting the package version will default to use the `latest` tag version.
-
 
 ## Brainstorming notes
 
 ### Cache
+
 - Caching improves performance for the user and reduces system load/costs, but decreases accuracy (e.g. patch version updates) thus security. Adjusting caching expiration time acts as a lever between performance and accuracy. Reduced or no caching possible opportunity for monetization from a product perspective?
 
 - External cache opens the possibility of asynchronous workers. e.g. top K most popular packages can be fully re-scanned (without cache reads) multiple times a day and updated in cache.
 
 ### Architecture
+
 - Response JSON structure: show all dependencies in root, only nest dependency to parent when there is a conflicting version (this is how npm and `node_modules` work)?
 
 - Handling and displaying dependency cycles.
