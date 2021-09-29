@@ -5,7 +5,7 @@ This project is based on Typescript, Node.js, Express.js and Redis.
 
 ## Installation
 
-### With docker
+### With Docker
 As the application relies on Node.js and Redis, the project contains these necessary dependencies bundled through Docker and Docker Compose.
 Please refer to the official documentation for installing [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/) on your system.
 Once both are installed, run the following command in the root of the project directory:
